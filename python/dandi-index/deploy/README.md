@@ -68,11 +68,22 @@ python3 -m venv ~/neurosift-venv
 ~/neurosift-venv/bin/pip install --upgrade pip
 ~/neurosift-venv/bin/pip install openai requests h5py lindi   # add pynwb remfile for --assets
 
+# DANDI index
 cd ~/neurosift/python/dandi-index
 ~/neurosift-venv/bin/python scripts/update_data.py               # base (~2-3 min, 600+ dandisets)
 ~/neurosift-venv/bin/python scripts/update_data.py --embeddings  # optional: enables semanticSortDandisets
 ~/neurosift-venv/bin/python scripts/update_data.py --assets      # optional: slow, per-asset NWB metadata
+
+# OpenNeuro index (required for getOpenNeuroDatasets — the runner reads
+# ../../openneuro-index/data/openneuro.json). No credentials needed.
+cd ~/neurosift/python/openneuro-index
+~/neurosift-venv/bin/python scripts/update_data.py               # base (public openneuro.org GraphQL API)
+~/neurosift-venv/bin/python scripts/update_data.py --embeddings  # optional: enables semanticSortOpenNeuroDatasets
 ```
+
+EBRAINS (`getEbrainsDatasets`) is not covered here: its build needs an EBRAINS
+auth `TOKEN` and the `kg_core` package, so it is a separate manual step and
+those queries will error until it is built.
 
 Then return to root: `exit`.
 
@@ -104,9 +115,11 @@ printf '%s\n%s\n' '0 */6 * * * /home/neurosift/neurosift/python/dandi-index/depl
 crontab -l
 ```
 
-That refreshes the base index every 6 hours (`update_data.py` self-skips work
-that is still fresh) and embeddings daily at 04:30 UTC. The wrapper uses
-`~/neurosift-venv/bin/python` by default; override with `DANDI_INDEX_PYTHON`.
+That refreshes the base indexes (both DANDI and OpenNeuro) every 6 hours
+(`update_data.py` self-skips work that is still fresh) and embeddings daily at
+04:30 UTC. `--assets` applies to DANDI only; the OpenNeuro build has no asset
+pass. The wrapper uses `~/neurosift-venv/bin/python` by default; override with
+`DANDI_INDEX_PYTHON`.
 
 ## Updating the runner code later
 
