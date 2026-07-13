@@ -81,9 +81,25 @@ cd ~/neurosift/python/openneuro-index
 ~/neurosift-venv/bin/python scripts/update_data.py --embeddings  # optional: enables semanticSortOpenNeuroDatasets
 ```
 
-EBRAINS (`getEbrainsDatasets`) is not covered here: its build needs an EBRAINS
-auth `TOKEN` and the `kg_core` package, so it is a separate manual step and
-those queries will error until it is built.
+### EBRAINS (manual, not on cron)
+
+EBRAINS (`getEbrainsDatasets`) is a separate, manually-refreshed index. It needs
+the `kg_core` package and an EBRAINS Knowledge Graph auth token, and because
+those tokens are short-lived it is deliberately kept out of cron. EBRAINS
+datasets change slowly, so refresh by hand every few months:
+
+```bash
+~/neurosift-venv/bin/pip install kg-core           # one time
+cd ~/neurosift/python/ebrains-index
+# Get a fresh EBRAINS bearer token, then:
+TOKEN="<ebrains-token>" ~/neurosift-venv/bin/python scripts/update_data.py             # base (~1100 datasets)
+TOKEN="<ebrains-token>" ~/neurosift-venv/bin/python scripts/update_data.py --embeddings # enables semanticSortEbrainsDatasets
+```
+
+The runner reads `../../ebrains-index/data/ebrains.json` per request, so no
+restart is needed after a refresh. If the data dir is empty, EBRAINS queries
+error with "Ebrains data file not found" until the build above (or a copy of an
+existing `ebrains-index/data`) is in place.
 
 Then return to root: `exit`.
 
